@@ -1,30 +1,25 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Esta línea es la que conecta con tu otro archivo
+// Asegúrate de ajustar la ruta de importación según dónde guardaste tu LoginPage
+import 'features/auth/presentation/pages/login_page.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'App Diseño',
+      title: 'NutriMenu AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6FE38D)),
         useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-        ),
+        // Aquí puedes enlazar tu AppTheme global si lo deseas
       ),
-      home: const LoginScreen(), 
+      home: const LoginPage(),
     );
   }
 }
