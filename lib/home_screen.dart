@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,9 +13,8 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Aquí regresamos al login o cerramos sesión
-              Navigator.pop(context);
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
             },
           ),
         ],

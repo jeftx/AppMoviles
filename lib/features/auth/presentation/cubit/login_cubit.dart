@@ -1,43 +1,54 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../data/auth_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 enum AuthMode { login, register }
 enum AuthStatus { initial, submitting, success, error }
 
 class LoginState {
-  final AuthMode mode;
-  final AuthStatus status;
-  final String? errorMessage;
-
   const LoginState({
     this.mode = AuthMode.login,
     this.status = AuthStatus.initial,
     this.errorMessage,
   });
 
+  final AuthMode mode;
+  final AuthStatus status;
+  final String? errorMessage;
+
   LoginState copyWith({
     AuthMode? mode,
     AuthStatus? status,
-    String? errorMessage,
+    Object? errorMessage = _notProvided,
   }) {
     return LoginState(
       mode: mode ?? this.mode,
       status: status ?? this.status,
-      errorMessage: errorMessage,
+      errorMessage: identical(errorMessage, _notProvided)
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 }
 
-class LoginCubit extends Cubit<LoginState> {
-  final AuthRepository _authRepository = AuthRepository();
+const Object _notProvided = Object();
 
-  LoginCubit() : super(const LoginState());
+class LoginCubit extends Cubit<LoginState> {
+  LoginCubit({AuthRepository? authRepository})
+      : _authRepository = authRepository ?? AuthRepository(),
+        super(const LoginState());
+
+  final AuthRepository _authRepository;
 
   void toggleMode() {
-    final newMode = state.mode == AuthMode.login ? AuthMode.register : AuthMode.login;
-    emit(state.copyWith(mode: newMode, status: AuthStatus.initial, errorMessage: null));
+    final newMode = state.mode == AuthMode.login
+        ? AuthMode.register
+        : AuthMode.login;
+    emit(state.copyWith(
+      mode: newMode,
+      status: AuthStatus.initial,
+      errorMessage: null,
+    ));
   }
 
   Future<void> submit(String email, String password, [String? name]) async {
@@ -47,62 +58,61 @@ class LoginCubit extends Cubit<LoginState> {
       if (state.mode == AuthMode.login) {
         await _authRepository.signInWithEmailAndPassword(email, password);
       } else {
-        await _authRepository.registerWithEmailAndPassword(email, password, name ?? '');
+        await _authRepository.registerWithEmailAndPassword(
+          email,
+          password,
+          name ?? '',
+        );
       }
-      
-      emit(state.copyWith(status: AuthStatus.success));
+      if (!isClosed) {
+        emit(state.copyWith(status: AuthStatus.success, errorMessage: null));
+      }
     } catch (e) {
-      emit(state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: e.toString().replaceAll('Exception: ', ''),
-      ));
+      if (!isClosed) {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: _errorMessage(e),
+        ));
+      }
     }
   }
 
-Future<void> signInWithGoogle() async {
-  try {
-    emit(state.copyWith(status: AuthStatus.submitting));
+  Future<void> signInWithGoogle() async {
+    emit(state.copyWith(status: AuthStatus.submitting, errorMessage: null));
 
-    // 1. Dispara el flujo de inicio de sesión con Google
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    
-    if (googleUser == null) {
-      // El usuario canceló el inicio de sesión
-      emit(state.copyWith(status: AuthStatus.initial));
-      return;
+    try {
+      await _authRepository.signInWithGoogle();
+      if (!isClosed) {
+        emit(state.copyWith(status: AuthStatus.success, errorMessage: null));
+      }
+    } on AuthCancelledException {
+      if (!isClosed) {
+        emit(state.copyWith(status: AuthStatus.initial, errorMessage: null));
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: _errorMessage(e),
+        ));
+      }
     }
-
-    // 2. Obtiene los detalles de autenticación de la solicitud de Google
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // 3. Crea una nueva credencial para Firebase
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    // 4. Inicia sesión en Firebase con las credenciales de Google
-    await FirebaseAuth.instance.signInWithCredential(credential);
-
-    // 5. Si todo sale bien, cambia el estado a éxito para que navegue al HomeScreen
-    emit(state.copyWith(status: AuthStatus.success));
-    
-  } catch (e) {
-    emit(state.copyWith(
-      status: AuthStatus.error,
-      errorMessage: e.toString(),
-    ));
   }
-}
 
-Future<void> resetPassword(String email) async {
-  try {
-    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-  } catch (e) {
-    // Manejar error si es necesario
+  Future<String?> resetPassword(String email) async {
+    try {
+      await _authRepository.sendPasswordResetEmail(email);
+      return null;
+    } catch (e) {
+      return _errorMessage(e);
+    }
   }
-}
 
-
+  String _errorMessage(Object error) {
+    if (error is AuthException) {
+      return error.message;
+    }
+    return 'Ocurrió un error inesperado. Inténtalo de nuevo.';
+  }
 }
 

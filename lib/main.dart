@@ -1,7 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/auth_gate.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       title: 'NutriMenu AI',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginPage(),
+      home: const AuthGate(),
       
     );
   }

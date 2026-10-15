@@ -9,7 +9,6 @@ import '../cubit/login_cubit.dart';
 import '../widgets/login_brand_header.dart';
 import '../widgets/email_auth_divider.dart';
 import '../widgets/google_sign_in_button.dart';
-import 'package:flutter_app/home_screen.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -85,13 +84,21 @@ class _LoginViewState extends State<_LoginView> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: () {
+              onPressed: () async {
                 final email = resetEmailController.text.trim();
                 if (email.isNotEmpty && email.contains('@')) {
-                  context.read<LoginCubit>().resetPassword(email);
                   Navigator.pop(dialogContext);
+                  final error =
+                      await context.read<LoginCubit>().resetPassword(email);
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Correo de recuperación enviado si la cuenta existe')),
+                    SnackBar(
+                      content: Text(
+                        error ??
+                            'Si existe una cuenta con ese correo, recibirás un enlace de recuperación.',
+                      ),
+                      backgroundColor: error == null ? null : Colors.redAccent,
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -112,12 +119,7 @@ class _LoginViewState extends State<_LoginView> {
     return Scaffold(
       body: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
-          if (state.status == AuthStatus.success) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          } else if (state.status == AuthStatus.error) {
+          if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage ?? 'Ocurrió un error'),
