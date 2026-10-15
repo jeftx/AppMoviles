@@ -6,10 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../cubit/login_cubit.dart';
- // Asumiendo que exportas los widgets arriba
 import '../widgets/login_brand_header.dart';
 import '../widgets/email_auth_divider.dart';
 import '../widgets/google_sign_in_button.dart';
+import 'package:flutter_app/home_screen.dart';
+
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -54,15 +55,74 @@ class _LoginViewState extends State<_LoginView> {
     }
   }
 
+  // Diálogo para solicitar el correo y recuperar la contraseña
+  void _showForgotPasswordDialog(BuildContext context) {
+    final resetEmailController = TextEditingController(text: _emailCtrl.text);
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Recuperar contraseña', style: GoogleFonts.nunito(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+                style: GoogleFonts.nunito(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(hintText: 'Correo electrónico'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: () {
+                final email = resetEmailController.text.trim();
+                if (email.isNotEmpty && email.contains('@')) {
+                  context.read<LoginCubit>().resetPassword(email);
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Correo de recuperación enviado si la cuenta existe')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ingresa un correo válido'), backgroundColor: Colors.redAccent),
+                  );
+                }
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state.status == AuthStatus.success) {
-            // Navigator.pushReplacementNamed(context, '/dashboard');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          } else if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('¡Acceso exitoso!')),
+              SnackBar(
+                content: Text(state.errorMessage ?? 'Ocurrió un error'),
+                backgroundColor: Colors.redAccent,
+              ),
             );
           }
         },
@@ -71,7 +131,6 @@ class _LoginViewState extends State<_LoginView> {
           final isLoading = state.status == AuthStatus.submitting;
 
           return Container(
-            // Fondo degradado: 25% primary a background
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topRight,
@@ -97,7 +156,11 @@ class _LoginViewState extends State<_LoginView> {
                           const LoginBrandHeader(),
                           const SizedBox(height: 24),
                           
-                          const GoogleSignInButton(),
+                          // --- BOTÓN CONTINUAR CON GOOGLE ---
+                          GestureDetector(
+                            onTap: isLoading ? null : () => context.read<LoginCubit>().signInWithGoogle(),
+                            child: const GoogleSignInButton(),
+                          ),
                           const SizedBox(height: 24),
                           
                           const EmailAuthDivider(),
@@ -109,7 +172,6 @@ class _LoginViewState extends State<_LoginView> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // CAMPO NOMBRE (Solo en Registro)
                                 if (isRegister) ...[
                                   TextFormField(
                                     controller: _nameCtrl,
@@ -120,7 +182,6 @@ class _LoginViewState extends State<_LoginView> {
                                   const SizedBox(height: 12),
                                 ],
 
-                                // CAMPO CORREO
                                 TextFormField(
                                   controller: _emailCtrl,
                                   keyboardType: TextInputType.emailAddress,
@@ -131,9 +192,6 @@ class _LoginViewState extends State<_LoginView> {
                                 ),
                                 const SizedBox(height: 12),
 
-
-
-                                // CAMPO CONTRASEÑA
                                 TextFormField(
                                   controller: _passCtrl,
                                   obscureText: _obscurePassword,
@@ -152,12 +210,12 @@ class _LoginViewState extends State<_LoginView> {
                                   validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
                                 ),
 
-                                // RECUPERAR CONTRASEÑA (Solo en Login)
+                                // --- RECUPERAR CONTRASEÑA ---
                                 if (!isRegister)
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: TextButton(
-                                      onPressed: () {},
+                                      onPressed: isLoading ? null : () => _showForgotPasswordDialog(context),
                                       child: Text(
                                         '¿Olvidaste tu contraseña?',
                                         style: GoogleFonts.nunito(
@@ -171,7 +229,7 @@ class _LoginViewState extends State<_LoginView> {
 
                                 const SizedBox(height: 24),
 
-                                // --- BOTÓN PRINCIPAL ---
+                                // --- BOTÓN PRINCIPAL (Iniciar sesión / Crear cuenta) ---
                                 Container(
                                   height: 56,
                                   width: double.infinity,
@@ -210,7 +268,7 @@ class _LoginViewState extends State<_LoginView> {
 
                           const SizedBox(height: 24),
 
-                          // --- CAMBIAR MODO ---
+                          // --- CAMBIAR MODO (Iniciar sesión / Crear una cuenta) ---
                           TextButton(
                             onPressed: isLoading ? null : () => context.read<LoginCubit>().toggleMode(),
                             child: Text(
