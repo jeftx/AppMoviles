@@ -6,7 +6,7 @@ import 'app_colors.dart';
 abstract class AppTheme {
   // Sombra global descrita en los requerimientos
   static BoxShadow get globalShadow => BoxShadow(
-        color: AppColors.textSecondary.withOpacity(0.18),
+        color: AppColors.textSecondary.withValues(alpha: 0.18),
         offset: const Offset(0, 8),
         blurRadius: 24,
         spreadRadius: -12,

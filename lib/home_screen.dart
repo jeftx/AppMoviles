@@ -127,11 +127,11 @@ class _NutritionSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _Styles.cardDecoration,
-      child: Row(
+      child: const Row(
         children: [
-          const _CaloriesRing(),
-          const SizedBox(width: 22),
-          const Expanded(
+          _CaloriesRing(),
+          SizedBox(width: 22),
+          Expanded(
             child: Column(
               children: [
                 _MacroProgress(
@@ -174,14 +174,14 @@ class _CaloriesRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 108,
             height: 108,
             child: CircularProgressIndicator(
               value: 1150 / 1900,
               strokeWidth: 9,
-              backgroundColor: const Color(0xFFF4ECEF),
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              backgroundColor: Color(0xFFF4ECEF),
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
             ),
           ),
           Column(
@@ -488,19 +488,19 @@ class _BottomNavigation extends StatelessWidget {
         color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.05),
+            color: Colors.black.withValues(alpha: .05),
             blurRadius: 18,
             offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: SafeArea(
+      child: const SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
+            children: [
               _NavigationItem(icon: Icons.menu_rounded, label: 'Más'),
               _NavigationItem(icon: Icons.home_outlined, label: 'Inicio'),
               _AddNavigationButton(),
@@ -618,7 +618,7 @@ abstract class _Styles {
 
   static final actionSubtitle = GoogleFonts.nunito(
     fontSize: 11,
-    color: AppColors.primaryDark.withOpacity(.72),
+    color: AppColors.primaryDark.withValues(alpha: .72),
   );
 
   static final mealTitle = GoogleFonts.nunito(
