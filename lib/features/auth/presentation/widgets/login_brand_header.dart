@@ -46,11 +46,6 @@ class LoginBrandHeader extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
-          '🥗 🍓 🥑',
-          style: TextStyle(fontSize: 36, height: 40 / 36),
-        ),
       ],
     );
   }

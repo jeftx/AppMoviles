@@ -4,21 +4,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/notifications/push_notification_service.dart';
+import '../../../../home_screen.dart';
 import '../cubit/login_cubit.dart';
- // Asumiendo que exportas los widgets arriba
+// Asumiendo que exportas los widgets arriba
 import '../widgets/login_brand_header.dart';
 import '../widgets/email_auth_divider.dart';
 import '../widgets/google_sign_in_button.dart';
+
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => LoginCubit(),
-      child: const _LoginView(),
-    );
+    return BlocProvider(create: (_) => LoginCubit(), child: const _LoginView());
   }
 }
 
@@ -60,15 +59,22 @@ class _LoginViewState extends State<_LoginView> {
       body: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state.status == AuthStatus.success) {
-            // Navigator.pushReplacementNamed(context, '/dashboard');
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('¡Acceso exitoso!')),
+            PushNotificationService.requestPermissionAndRegister();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+              (route) => false,
             );
+          } else if (state.status == AuthStatus.error &&
+              state.errorMessage != null) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
         },
         builder: (context, state) {
           final isRegister = state.mode == AuthMode.register;
-          final isLoading = state.status == AuthStatus.submitting;
+          final isEmailLoading = state.status == AuthStatus.submitting;
+          final isGoogleLoading = state.status == AuthStatus.googleSubmitting;
+          final isLoading = isEmailLoading || isGoogleLoading;
 
           return Container(
             // Fondo degradado: 25% primary a background
@@ -77,7 +83,7 @@ class _LoginViewState extends State<_LoginView> {
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: [
-                  AppColors.primary.withOpacity(0.12),
+                  AppColors.primary.withValues(alpha: 0.12),
                   AppColors.background,
                   AppColors.background,
                 ],
@@ -90,16 +96,23 @@ class _LoginViewState extends State<_LoginView> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 448),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 40,
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const LoginBrandHeader(),
                           const SizedBox(height: 24),
-                          
-                          const GoogleSignInButton(),
+
+                          GoogleSignInButton(
+                            isLoading: isGoogleLoading,
+                            onPressed: () =>
+                                context.read<LoginCubit>().signInWithGoogle(),
+                          ),
                           const SizedBox(height: 24),
-                          
+
                           const EmailAuthDivider(),
                           const SizedBox(height: 24),
 
@@ -114,8 +127,11 @@ class _LoginViewState extends State<_LoginView> {
                                   TextFormField(
                                     controller: _nameCtrl,
                                     textInputAction: TextInputAction.next,
-                                    decoration: const InputDecoration(hintText: 'Nombre completo'),
-                                    validator: (v) => v!.isEmpty ? 'Requerido' : null,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Nombre completo',
+                                    ),
+                                    validator: (v) =>
+                                        v!.isEmpty ? 'Requerido' : null,
                                   ),
                                   const SizedBox(height: 12),
                                 ],
@@ -126,12 +142,15 @@ class _LoginViewState extends State<_LoginView> {
                                   keyboardType: TextInputType.emailAddress,
                                   textInputAction: TextInputAction.next,
                                   autofillHints: const [AutofillHints.email],
-                                  decoration: const InputDecoration(hintText: 'Correo electrónico'),
-                                  validator: (v) => v!.contains('@') ? null : 'Correo inválido',
+                                  decoration: const InputDecoration(
+                                    hintText: 'Correo electrónico',
+                                    prefixIcon: Icon(Icons.mail_outline),
+                                  ),
+                                  validator: (v) => v!.contains('@')
+                                      ? null
+                                      : 'Correo inválido',
                                 ),
                                 const SizedBox(height: 12),
-
-
 
                                 // CAMPO CONTRASEÑA
                                 TextFormField(
@@ -141,15 +160,23 @@ class _LoginViewState extends State<_LoginView> {
                                   autocorrect: false,
                                   decoration: InputDecoration(
                                     hintText: 'Contraseña',
+                                    prefixIcon: const Icon(Icons.lock_outline),
                                     suffixIcon: IconButton(
                                       icon: Icon(
-                                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
                                         color: AppColors.textSecondary,
                                       ),
-                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                      onPressed: () => setState(
+                                        () => _obscurePassword =
+                                            !_obscurePassword,
+                                      ),
                                     ),
                                   ),
-                                  validator: (v) => v!.length < 6 ? 'Mínimo 6 caracteres' : null,
+                                  validator: (v) => v!.length < 6
+                                      ? 'Mínimo 6 caracteres'
+                                      : null,
                                 ),
 
                                 // RECUPERAR CONTRASEÑA (Solo en Login)
@@ -172,36 +199,44 @@ class _LoginViewState extends State<_LoginView> {
                                 const SizedBox(height: 24),
 
                                 // --- BOTÓN PRINCIPAL ---
-                                Container(
-                                  height: 56,
+                                SizedBox(
+                                  height: 58,
                                   width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    boxShadow: [AppTheme.globalShadow],
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                  child: FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: AppColors.primaryDark,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(28),
+                                  child: Material(
+                                    color: isLoading
+                                        ? const Color(0xFFF0B5CC)
+                                              .withValues(alpha: .55)
+                                        : const Color(0xFFF0B5CC),
+                                    borderRadius: BorderRadius.circular(30),
+                                    child: InkWell(
+                                      onTap: isLoading
+                                          ? null
+                                          : () => _submitForm(context, state),
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Center(
+                                        child: isEmailLoading
+                                            ? const SizedBox(
+                                                height: 24,
+                                                width: 24,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color:
+                                                          AppColors.primaryDark,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
+                                            : Text(
+                                                isRegister
+                                                    ? 'Crear cuenta'
+                                                    : 'Iniciar sesión',
+                                                style: GoogleFonts.quicksand(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.primaryDark,
+                                                ),
+                                              ),
                                       ),
                                     ),
-                                    onPressed: isLoading ? null : () => _submitForm(context, state),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            height: 24, width: 24,
-                                            child: CircularProgressIndicator(
-                                              color: AppColors.primaryDark,
-                                              strokeWidth: 2,
-                                            ))
-                                        : Text(
-                                            isRegister ? 'Crear cuenta' : 'Iniciar sesión',
-                                            style: GoogleFonts.nunito(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
                                   ),
                                 ),
                               ],
@@ -212,7 +247,9 @@ class _LoginViewState extends State<_LoginView> {
 
                           // --- CAMBIAR MODO ---
                           TextButton(
-                            onPressed: isLoading ? null : () => context.read<LoginCubit>().toggleMode(),
+                            onPressed: isLoading
+                                ? null
+                                : () => context.read<LoginCubit>().toggleMode(),
                             child: Text(
                               isRegister
                                   ? '¿Ya tienes cuenta? Inicia sesión'

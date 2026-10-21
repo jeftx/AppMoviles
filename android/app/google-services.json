@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "602226538276",
+    "project_id": "nutrimenu-app",
+    "storage_bucket": "nutrimenu-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:602226538276:android:8fe970228f55e17d8425b1",
+        "android_client_info": {
+          "package_name": "com.example.flutter_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "602226538276-7ej09f3cent9ggm35s6tu1ba1ag8364v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_app",
+            "certificate_hash": "8c5a8fca3088cb7e1b97a0d77ebaf05e65911f62"
+          }
+        },
+        {
+          "client_id": "602226538276-ffluppddu6k4biin0l26vm600rfasln3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_app",
+            "certificate_hash": "976705dd2c0ddfcc8a34394124a20c696a2a0215"
+          }
+        },
+        {
+          "client_id": "602226538276-pqbumbfs68ak59k8slrjv7o2584sc3ie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBc7aC_i--465sYgQqMJKaLnZY7lMd-iuY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "602226538276-pqbumbfs68ak59k8slrjv7o2584sc3ie.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "602226538276-bf717hdprpjfoujq82nc3s2k6bnh5rug.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

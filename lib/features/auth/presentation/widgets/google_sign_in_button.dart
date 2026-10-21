@@ -3,7 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class GoogleSignInButton extends StatelessWidget {
-  const GoogleSignInButton({super.key});
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const GoogleSignInButton({
+    super.key,
+    required this.onPressed,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,16 +24,25 @@ class GoogleSignInButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           elevation: 0,
         ),
-        icon: const Text('G', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        icon: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text(
+                'G',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
         label: Text(
-          'Continuar con Google',
+          isLoading ? 'Conectando con Google...' : 'Continuar con Google',
           style: GoogleFonts.nunito(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textMain,
           ),
         ),
-        onPressed: () {},
+        onPressed: isLoading ? null : onPressed,
       ),
     );
   }
