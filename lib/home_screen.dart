@@ -6,6 +6,8 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/profile/presentation/widgets/profile_avatar.dart';
+import 'features/food_scan/presentation/pages/food_scan_page.dart';
+import 'features/menu_generator/presentation/pages/menu_generator_page.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,7 +20,14 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      bottomNavigationBar: const _BottomNavigation(),
+      bottomNavigationBar: _BottomNavigation(
+        onGenerate: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const MenuGeneratorPage()),
+        ),
+        onScan: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const FoodScanPage()),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
@@ -31,7 +40,14 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 28),
                 const _NutritionSummary(),
                 const SizedBox(height: 18),
-                const _QuickActions(),
+                _QuickActions(
+                  onGenerate: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const MenuGeneratorPage()),
+                  ),
+                  onScan: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const FoodScanPage()),
+                  ),
+                ),
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,11 +253,14 @@ class _MacroProgress extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions();
+  final VoidCallback onGenerate;
+  final VoidCallback onScan;
+
+  const _QuickActions({required this.onGenerate, required this.onScan});
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
         Expanded(
           child: _ActionCard(
@@ -249,15 +268,17 @@ class _QuickActions extends StatelessWidget {
             subtitle: 'Aleatorio o a tu medida',
             icon: Icons.auto_awesome_outlined,
             color: AppColors.primary,
+            onTap: onGenerate,
           ),
         ),
-        SizedBox(width: 14),
+        const SizedBox(width: 14),
         Expanded(
           child: _ActionCard(
             title: 'Escanear comida',
             subtitle: 'Calorías con IA',
             icon: Icons.document_scanner_outlined,
-            color: Color(0xFFD3E9D9),
+            color: const Color(0xFFD3E9D9),
+            onTap: onScan,
           ),
         ),
       ],
@@ -270,12 +291,14 @@ class _ActionCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color color;
+  final VoidCallback onTap;
 
   const _ActionCard({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.color,
+    required this.onTap,
   });
 
   @override
@@ -285,7 +308,7 @@ class _ActionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () {},
+        onTap: onTap,
         child: SizedBox(
           height: 144,
           child: Padding(
@@ -479,7 +502,10 @@ class _WaterProgress extends StatelessWidget {
 }
 
 class _BottomNavigation extends StatelessWidget {
-  const _BottomNavigation();
+  final VoidCallback onGenerate;
+  final VoidCallback onScan;
+
+  const _BottomNavigation({required this.onGenerate, required this.onScan});
 
   @override
   Widget build(BuildContext context) {
@@ -494,18 +520,22 @@ class _BottomNavigation extends StatelessWidget {
           ),
         ],
       ),
-      child: const SafeArea(
+      child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _NavigationItem(icon: Icons.menu_rounded, label: 'Más'),
-              _NavigationItem(icon: Icons.home_outlined, label: 'Inicio'),
-              _AddNavigationButton(),
-              _NavigationItem(icon: Icons.auto_awesome_outlined, label: 'Generar'),
-              _NavigationItem(icon: Icons.smart_toy_outlined, label: 'Asistente'),
+              const _NavigationItem(icon: Icons.menu_rounded, label: 'Más'),
+              const _NavigationItem(icon: Icons.home_outlined, label: 'Inicio'),
+              _AddNavigationButton(onTap: onScan),
+              _NavigationItem(
+                icon: Icons.auto_awesome_outlined,
+                label: 'Generar',
+                onTap: onGenerate,
+              ),
+              const _NavigationItem(icon: Icons.smart_toy_outlined, label: 'Asistente'),
             ],
           ),
         ),
@@ -517,10 +547,12 @@ class _BottomNavigation extends StatelessWidget {
 class _NavigationItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   const _NavigationItem({
     required this.icon,
     required this.label,
+    this.onTap,
   });
 
   @override
@@ -528,20 +560,26 @@ class _NavigationItem extends StatelessWidget {
     const color = AppColors.textSecondary;
     return SizedBox(
       width: 60,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 3),
-          Text(label, style: _Styles.navigation.copyWith(color: color)),
-        ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 3),
+            Text(label, style: _Styles.navigation.copyWith(color: color)),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _AddNavigationButton extends StatelessWidget {
-  const _AddNavigationButton();
+  final VoidCallback onTap;
+
+  const _AddNavigationButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -549,14 +587,22 @@ class _AddNavigationButton extends StatelessWidget {
       width: 62,
       height: 54,
       child: Center(
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, color: AppColors.primaryDark, size: 29),
+            ),
           ),
-          child: const Icon(Icons.add, color: AppColors.primaryDark, size: 29),
         ),
       ),
     );

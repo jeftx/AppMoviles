@@ -17,12 +17,12 @@ class AuthCancelledException implements Exception {
 }
 
 class AuthRepository {
-  AuthRepository({FirebaseAuth? firebaseAuth, GoogleSignIn? googleSignIn})
-      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+  AuthRepository({FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
+  static final Future<void> _googleSignInInitialization =
+      GoogleSignIn.instance.initialize();
 
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -69,25 +69,34 @@ class AuthRepository {
         );
       }
 
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw const AuthCancelledException();
+      await _googleSignInInitialization;
+      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+        throw const AuthException(
+          'El inicio de sesión con Google no está disponible en esta plataforma.',
+        );
       }
-
-      final googleAuth = await googleUser.authentication;
-      if (googleAuth.idToken == null) {
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
         throw const AuthException(
           'Google no devolvió un token válido. Revisa la configuración OAuth.',
         );
       }
 
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        idToken: idToken,
       );
       return _requireUser(await _firebaseAuth.signInWithCredential(credential));
     } on FirebaseAuthException catch (e) {
       throw AuthException(_handleAuthException(e));
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const AuthCancelledException();
+      }
+      throw AuthException(
+        e.description ??
+            'No se pudo iniciar sesión con Google. Verifica la configuración OAuth.',
+      );
     } on PlatformException catch (e) {
       throw AuthException(
         e.message ??
@@ -105,10 +114,9 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await Future.wait([
-      _firebaseAuth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    await _firebaseAuth.signOut();
+    await _googleSignInInitialization;
+    await GoogleSignIn.instance.signOut();
   }
 
   User _requireUser(UserCredential credential) {
