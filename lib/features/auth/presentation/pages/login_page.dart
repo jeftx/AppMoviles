@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/notifications/push_notification_service.dart';
-import '../../../../home_screen.dart';
+import 'auth_gate.dart';
 import '../cubit/login_cubit.dart';
 // Asumiendo que exportas los widgets arriba
 import '../widgets/login_brand_header.dart';
@@ -61,7 +61,7 @@ class _LoginViewState extends State<_LoginView> {
           if (state.status == AuthStatus.success) {
             PushNotificationService.requestPermissionAndRegister();
             Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
+              MaterialPageRoute<void>(builder: (_) => const AuthGate()),
               (route) => false,
             );
           } else if (state.status == AuthStatus.error &&

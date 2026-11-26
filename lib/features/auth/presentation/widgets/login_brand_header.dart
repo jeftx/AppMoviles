@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 
@@ -36,7 +37,7 @@ class LoginBrandHeader extends StatelessWidget {
         SizedBox(
           width: 320,
           child: Text(
-            'Genera menús semanales adaptados a tus objetivos con IA',
+            'Genera un menú diario adaptado a tus objetivos con IA',
             textAlign: TextAlign.center,
             style: GoogleFonts.nunito(
               fontSize: 14,
